@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ubicación de Estacionamiento</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Color Palette */
+            --navy-deep: #0a192f;
+            --navy-card: rgba(17, 34, 64, 0.85);
+            --navy-light: #172a45;
+            --yellow-primary: #f5c518;
+            --yellow-glow: rgba(245, 197, 24, 0.15);
+            --text-light: #f8f9fa;
+            --text-muted: #8892b0;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--navy-deep);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Decorative background glows */
+        .bg-glow-1 {
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(245, 197, 24, 0.08) 0%, rgba(10, 25, 47, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            bottom: -10%;
+            right: -10%;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(23, 42, 69, 0.6) 0%, rgba(10, 25, 47, 0) 80%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Main Container: Mobile viewport sized */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-badge {
+            background-color: var(--yellow-primary);
+            color: var(--navy-deep);
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(245, 197, 24, 0.3);
+        }
+
+        .brand-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+        }
+
+        .brand-tagline {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Central Card */
+        .card {
+            background: var(--navy-card);
+            border: 1px solid rgba(245, 197, 24, 0.15);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                        0 0 30px var(--yellow-glow);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: zoomIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Subtle reflection effect on the card */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: skewX(-25deg);
+            transition: 0.75s;
+        }
+
+        .card:hover::before {
+            left: 150%;
+            transition: 0.75s;
+        }
+
+        .card-icon {
+            margin-bottom: 1.5rem;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            background-color: rgba(245, 197, 24, 0.1);
+            color: var(--yellow-primary);
+            font-size: 1.75rem;
+        }
+
+        .info-text {
+            font-size: 1.35rem;
+            line-height: 1.5;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .highlight-text {
+            color: var(--yellow-primary);
+            font-size: 1.8rem;
+            font-weight: 800;
+            display: inline-block;
+            margin: 0 0.25rem;
+            text-shadow: 0 0 10px rgba(245, 197, 24, 0.3);
+        }
+
+        .arrow-container {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Pulsing/sliding arrow animation */
+        .arrow-right {
+            width: 3.5rem;
+            height: 3.5rem;
+            background-color: var(--yellow-primary);
+            color: var(--navy-deep);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 24px rgba(245, 197, 24, 0.4);
+            animation: slideArrow 1.8s infinite ease-in-out;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .arrow-right:active {
+            transform: scale(0.92);
+            box-shadow: 0 4px 12px rgba(245, 197, 24, 0.2);
+        }
+
+        .arrow-right svg {
+            width: 1.75rem;
+            height: 1.75rem;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Keyframes Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideArrow {
+            0% {
+                transform: translateX(0);
+                box-shadow: 0 8px 24px rgba(245, 197, 24, 0.3);
+            }
+            50% {
+                transform: translateX(12px);
+                box-shadow: 0 8px 30px rgba(245, 197, 24, 0.5);
+            }
+            100% {
+                transform: translateX(0);
+                box-shadow: 0 8px 24px rgba(245, 197, 24, 0.3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="app-container">
+        <header>
+            <div class="logo-badge">P</div>
+            <div>
+                <div class="brand-name">SmartPark</div>
+                <div class="brand-tagline">Localizador de vehículo</div>
+            </div>
+        </header>
+
+        <main class="card">
+            <div class="card-icon">
+                <!-- Location indicator SVG icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-map-pin"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
+            
+            <p class="info-text">
+                Usted está estacionado en <br>
+                <span class="highlight-text">E1</span> columna <span class="highlight-text">1234</span>
+            </p>
+
+            <div class="arrow-container">
+                <div class="arrow-right" aria-label="Siguiente / Continuar">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 SmartPark. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+</body>
+</html>

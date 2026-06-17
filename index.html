@@ -188,42 +188,25 @@
             text-shadow: 0 0 10px rgba(245, 197, 24, 0.3);
         }
 
-        .arrow-container {
+        .logo-container {
             margin-top: 1.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* Pulsing/sliding arrow animation */
-        .arrow-right {
-            width: 3.5rem;
-            height: 3.5rem;
-            background-color: var(--yellow-primary);
-            color: var(--navy-deep);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 8px 24px rgba(245, 197, 24, 0.4);
-            animation: slideArrow 1.8s infinite ease-in-out;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .logo-clean {
+            max-width: 150px;
+            height: auto;
+            mix-blend-mode: screen;
+            filter: brightness(1.15) contrast(1.1);
+            animation: logoFloat 4s ease-in-out infinite;
         }
 
-        .arrow-right:active {
-            transform: scale(0.92);
-            box-shadow: 0 4px 12px rgba(245, 197, 24, 0.2);
-        }
-
-        .arrow-right svg {
-            width: 1.75rem;
-            height: 1.75rem;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+        @keyframes logoFloat {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0); }
         }
 
         footer {
@@ -308,13 +291,8 @@
                 Columna <span class="highlight-text" style="font-size: 2.2rem; color: var(--yellow-primary); font-weight: 800; display: inline-block;">A-01</span>
             </p>
 
-            <div class="arrow-container">
-                <div class="arrow-right" aria-label="Siguiente / Continuar">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
+            <div class="logo-container">
+                <img src="vinil.jpg" alt="Parking Tolón" class="logo-clean">
             </div>
         </main>
 

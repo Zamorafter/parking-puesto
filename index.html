@@ -193,10 +193,8 @@
         }
 
         .logo-clean {
-            max-width: 150px;
+            max-width: 170px;
             height: auto;
-            mix-blend-mode: screen;
-            filter: brightness(1.15) contrast(1.1);
             animation: logoFloat 4s ease-in-out infinite;
         }
 
@@ -269,7 +267,7 @@
 
     <div class="app-container">
         <header>
-            <div class="logo-badge" style="background-image: url('logo.jfif'); background-size: cover; background-position: center;"></div>
+            <div class="logo-badge" style="background-image: url('logo.png'); background-size: cover; background-position: center;"></div>
             <div>
                 <div class="brand-name">Parking Tolón</div>
                 <div class="brand-tagline">Ubicación de estacionamiento</div>
@@ -289,7 +287,7 @@
             </p>
 
             <div class="logo-container">
-                <img src="logo.jfif" alt="Parking Tolón" class="logo-clean">
+                <img src="logo.png" alt="Parking Tolón" class="logo-clean">
             </div>
         </main>
 
@@ -297,49 +295,5 @@
             <p>&copy; 2026 SmartPark. Todos los derechos reservados.</p>
         </footer>
     </div>
-
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const img = new Image();
-            img.src = 'logo.jfif';
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imgData.data;
-                
-                // Remover el fondo de cuadrícula (píxeles oscuros o grises desaturados)
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i+1];
-                    const b = data[i+2];
-                    
-                    const max = Math.max(r, g, b);
-                    const min = Math.min(r, g, b);
-                    const sat = max - min;
-                    const avg = (r + g + b) / 3;
-                    
-                    // Si el píxel es muy oscuro (cuadros negros) o gris desaturado (cuadros grises), lo hacemos transparente
-                    if (avg < 55 || (sat < 25 && avg < 165)) {
-                        data[i+3] = 0; // Alpha = 0
-                    }
-                }
-                
-                ctx.putImageData(imgData, 0, 0);
-                const transparentLogoUrl = canvas.toDataURL('image/png');
-                
-                // Actualizar los elementos con la nueva imagen transparente
-                const cleanLogo = document.querySelector('.logo-clean');
-                if (cleanLogo) cleanLogo.src = transparentLogoUrl;
-                
-                const badge = document.querySelector('.logo-badge');
-                if (badge) badge.style.backgroundImage = `url('${transparentLogoUrl}')`;
-            };
-        });
-    </script>
 </body>
 </html>

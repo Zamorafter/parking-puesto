@@ -13,7 +13,6 @@ from PIL import Image, ImageDraw, ImageFont
 BASE_DIR = r"C:\Users\rquevedo\Music\parking mapa"
 OUT_DIR = os.path.join(BASE_DIR, "qr_casillas_amarillas")
 PAGES_DIR = os.path.join(BASE_DIR, "casillas")
-LOGO_PATH = os.path.join(BASE_DIR, "logo.png")
 SITE_BASE_URL = "https://zamorafter.github.io/parking-puesto"
 
 CODES = [
@@ -296,57 +295,6 @@ def load_font(size):
     return ImageFont.load_default()
 
 
-def crop_black_margins(img):
-    rgba = img.convert("RGBA")
-    pixels = rgba.load()
-    width, height = rgba.size
-    min_x, min_y, max_x, max_y = width, height, 0, 0
-    found = False
-
-    for y in range(height):
-        for x in range(width):
-            red, green, blue, alpha = pixels[x, y]
-            if alpha > 10 and (red > 20 or green > 20 or blue > 20):
-                min_x = min(min_x, x)
-                min_y = min(min_y, y)
-                max_x = max(max_x, x)
-                max_y = max(max_y, y)
-                found = True
-
-    if not found:
-        return rgba
-
-    pad = 18
-    return rgba.crop(
-        (
-            max(min_x - pad, 0),
-            max(min_y - pad, 0),
-            min(max_x + pad + 1, width),
-            min(max_y + pad + 1, height),
-        )
-    )
-
-
-def remove_black_background(img):
-    rgba = img.convert("RGBA")
-    pixels = rgba.load()
-    width, height = rgba.size
-
-    for y in range(height):
-        for x in range(width):
-            red, green, blue, alpha = pixels[x, y]
-            if alpha > 0 and red < 35 and green < 35 and blue < 35:
-                pixels[x, y] = (red, green, blue, 0)
-
-    return rgba
-
-
-def contain(img, max_width, max_height):
-    contained = img.copy()
-    contained.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
-    return contained
-
-
 def write_pages():
     os.makedirs(PAGES_DIR, exist_ok=True)
     for code in CODES:
@@ -361,7 +309,6 @@ def write_qr_images():
     label_font = load_font(54)
     small_font = load_font(28)
     title_font = load_font(44)
-    logo_src = remove_black_background(crop_black_margins(Image.open(LOGO_PATH)))
     manifest_rows = []
 
     for code in CODES:
@@ -376,9 +323,6 @@ def write_qr_images():
         qr.make(fit=True)
         qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
         qr_img = qr_img.resize((720, 720), Image.Resampling.NEAREST).convert("RGBA")
-
-        logo = contain(logo_src, 230, 115)
-        qr_img.alpha_composite(logo, ((720 - logo.width) // 2, (720 - logo.height) // 2))
 
         canvas = Image.new("RGB", (820, 960), "white")
         canvas.paste(qr_img.convert("RGB"), (50, 40))
@@ -406,7 +350,7 @@ def write_qr_images():
     rows = math.ceil(len(CODES) / columns)
     sheet = Image.new("RGB", (columns * thumb_width, rows * thumb_height + 70), "white")
     draw = ImageDraw.Draw(sheet)
-    title = f"QR casillas amarillas con logo ({len(CODES)})"
+    title = f"QR casillas amarillas ({len(CODES)})"
     bbox = draw.textbbox((0, 0), title, font=title_font)
     draw.text(((sheet.width - (bbox[2] - bbox[0])) // 2, 14), title, fill="black", font=title_font)
 

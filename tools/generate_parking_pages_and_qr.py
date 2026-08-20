@@ -327,6 +327,20 @@ def crop_black_margins(img):
     )
 
 
+def remove_black_background(img):
+    rgba = img.convert("RGBA")
+    pixels = rgba.load()
+    width, height = rgba.size
+
+    for y in range(height):
+        for x in range(width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha > 0 and red < 35 and green < 35 and blue < 35:
+                pixels[x, y] = (red, green, blue, 0)
+
+    return rgba
+
+
 def contain(img, max_width, max_height):
     contained = img.copy()
     contained.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
@@ -347,7 +361,7 @@ def write_qr_images():
     label_font = load_font(54)
     small_font = load_font(28)
     title_font = load_font(44)
-    logo_src = crop_black_margins(Image.open(LOGO_PATH))
+    logo_src = remove_black_background(crop_black_margins(Image.open(LOGO_PATH)))
     manifest_rows = []
 
     for code in CODES:
@@ -363,23 +377,8 @@ def write_qr_images():
         qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
         qr_img = qr_img.resize((720, 720), Image.Resampling.NEAREST).convert("RGBA")
 
-        badge_width, badge_height = 240, 136
-        badge = Image.new("RGBA", (badge_width, badge_height), (0, 0, 0, 255))
-        mask = Image.new("L", (badge_width, badge_height), 0)
-        mask_draw = ImageDraw.Draw(mask)
-        mask_draw.rounded_rectangle((0, 0, badge_width - 1, badge_height - 1), radius=18, fill=255)
-        rounded_badge = Image.new("RGBA", (badge_width, badge_height), (0, 0, 0, 0))
-        rounded_badge.paste(badge, (0, 0), mask)
-
-        logo = contain(logo_src, 215, 110)
-        rounded_badge.alpha_composite(
-            logo,
-            ((badge_width - logo.width) // 2, (badge_height - logo.height) // 2),
-        )
-        qr_img.alpha_composite(
-            rounded_badge,
-            ((720 - badge_width) // 2, (720 - badge_height) // 2),
-        )
+        logo = contain(logo_src, 230, 115)
+        qr_img.alpha_composite(logo, ((720 - logo.width) // 2, (720 - logo.height) // 2))
 
         canvas = Image.new("RGB", (820, 960), "white")
         canvas.paste(qr_img.convert("RGB"), (50, 40))

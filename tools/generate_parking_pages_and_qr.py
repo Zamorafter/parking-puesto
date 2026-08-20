@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 BASE_DIR = r"C:\Users\rquevedo\Music\parking mapa"
 OUT_DIR = os.path.join(BASE_DIR, "qr_casillas_amarillas")
 PAGES_DIR = os.path.join(BASE_DIR, "casillas")
+QR_LOGO_PATH = os.path.join(BASE_DIR, "assets", "parking_logo_pdf.png")
 SITE_BASE_URL = "https://zamorafter.github.io/parking-puesto"
 
 CODES = [
@@ -270,7 +271,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
         <main class="card">
             <p class="info-text">
                 Usted está estacionado en el <br>
-                <span class="highlight-text zone">Sótano 1, Lado Norte</span> <br>
+                <span class="highlight-text zone">Sótano 1</span> <br>
                 Columna <span class="highlight-text spot">{code}</span>
             </p>
 
@@ -295,6 +296,22 @@ def load_font(size):
     return ImageFont.load_default()
 
 
+def contain(img, max_width, max_height):
+    contained = img.copy()
+    contained.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+    return contained
+
+
+def round_corners(img, radius):
+    """Add rounded corners to an image using an alpha mask."""
+    mask = Image.new("L", img.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle([(0, 0), img.size], radius=radius, fill=255)
+    result = img.convert("RGBA")
+    result.putalpha(mask)
+    return result
+
+
 def write_pages():
     os.makedirs(PAGES_DIR, exist_ok=True)
     for code in CODES:
@@ -306,10 +323,16 @@ def write_pages():
 
 def write_qr_images():
     os.makedirs(OUT_DIR, exist_ok=True)
-    label_font = load_font(54)
-    small_font = load_font(28)
-    title_font = load_font(44)
+    title_font = load_font(40)
+    bottom_logo = Image.open(QR_LOGO_PATH).convert("RGBA")
     manifest_rows = []
+
+    # Card dimensions
+    card_w, card_h = 820, 1100
+    corner_radius = 50
+    padding = 50
+    qr_size = 640
+    bg_color = (240, 240, 240)  # Light gray background behind the card
 
     for code in CODES:
         url = f"{SITE_BASE_URL}/casillas/{code}/"
@@ -322,22 +345,45 @@ def write_qr_images():
         qr.add_data(url)
         qr.make(fit=True)
         qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-        qr_img = qr_img.resize((720, 720), Image.Resampling.NEAREST).convert("RGBA")
+        qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.NEAREST)
 
-        canvas = Image.new("RGB", (820, 960), "white")
-        canvas.paste(qr_img.convert("RGB"), (50, 40))
-        draw = ImageDraw.Draw(canvas)
-        bbox = draw.textbbox((0, 0), code, font=label_font)
-        draw.text(((820 - (bbox[2] - bbox[0])) // 2, 790), code, fill="black", font=label_font)
-        short_url = f"/casillas/{code}/"
-        bbox2 = draw.textbbox((0, 0), short_url, font=small_font)
-        draw.text(
-            ((820 - (bbox2[2] - bbox2[0])) // 2, 855),
-            short_url,
-            fill=(80, 80, 80),
-            font=small_font,
+        # Create white card
+        card = Image.new("RGB", (card_w, card_h), "white")
+        draw = ImageDraw.Draw(card)
+
+        # Draw "Ubica tu vehículo aquí" title at top
+        title_text = "Ubica tu vehículo aquí"
+        bbox = draw.textbbox((0, 0), title_text, font=title_font)
+        tw = bbox[2] - bbox[0]
+        draw.text(((card_w - tw) // 2, 50), title_text, fill=(50, 50, 50), font=title_font)
+
+        # Paste QR code centered below title
+        qr_y = 130
+        qr_x = (card_w - qr_size) // 2
+        card.paste(qr_img, (qr_x, qr_y))
+
+        # Paste parking logo below QR
+        logo = contain(bottom_logo, 450, 140)
+        logo_y = qr_y + qr_size + 40
+        card.paste(logo, ((card_w - logo.width) // 2, logo_y), logo)
+
+        # Round the card corners
+        rounded_card = round_corners(card, corner_radius)
+
+        # Draw thin rounded border
+        border_draw = ImageDraw.Draw(rounded_card)
+        border_draw.rounded_rectangle(
+            [(0, 0), (card_w - 1, card_h - 1)],
+            radius=corner_radius,
+            outline=(200, 200, 200),
+            width=3,
         )
-        canvas.save(os.path.join(OUT_DIR, f"{code}.png"), "PNG")
+
+        # Place card on a white background
+        canvas = Image.new("RGBA", (card_w + 40, card_h + 40), (255, 255, 255, 255))
+        canvas.paste(rounded_card, (20, 20), rounded_card)
+
+        canvas.convert("RGB").save(os.path.join(OUT_DIR, f"{code}.png"), "PNG")
         manifest_rows.append([code, f"{code}.png", url])
 
     with open(os.path.join(OUT_DIR, "lista_qr.csv"), "w", newline="", encoding="utf-8") as file:
@@ -345,18 +391,19 @@ def write_qr_images():
         writer.writerow(["codigo", "archivo", "url"])
         writer.writerows(manifest_rows)
 
-    thumb_width, thumb_height = 246, 292
+    thumb_width, thumb_height = 246, 320
     columns = 4
     rows = math.ceil(len(CODES) / columns)
+    index_font = load_font(44)
     sheet = Image.new("RGB", (columns * thumb_width, rows * thumb_height + 70), "white")
     draw = ImageDraw.Draw(sheet)
     title = f"QR casillas amarillas ({len(CODES)})"
-    bbox = draw.textbbox((0, 0), title, font=title_font)
-    draw.text(((sheet.width - (bbox[2] - bbox[0])) // 2, 14), title, fill="black", font=title_font)
+    bbox = draw.textbbox((0, 0), title, font=index_font)
+    draw.text(((sheet.width - (bbox[2] - bbox[0])) // 2, 14), title, fill="black", font=index_font)
 
     for index, code in enumerate(CODES):
         image = Image.open(os.path.join(OUT_DIR, f"{code}.png")).convert("RGB")
-        image.thumbnail((210, 250), Image.Resampling.LANCZOS)
+        image.thumbnail((210, 280), Image.Resampling.LANCZOS)
         x = (index % columns) * thumb_width + (thumb_width - image.width) // 2
         y = 70 + (index // columns) * thumb_height
         sheet.paste(image, (x, y))
